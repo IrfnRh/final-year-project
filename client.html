@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capsule Corp | Secure Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; height: 100vh; background-color: #1a1a2e;
+            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px);
+            background-size: 550px 550px; font-family: 'Russo One', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .card {
+            width: 380px; padding: 40px; background: rgba(255, 255, 255, 0.95);
+            border: 6px solid #F85B1A; border-radius: 20px; text-align: center;
+            box-shadow: 0 0 50px rgba(248, 91, 26, 0.6); position: relative;
+        }
+        h1 { color: #1a1a2e; margin: 0; border-bottom: 4px solid #F85B1A; display: inline-block; margin-bottom: 20px;}
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #072083; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: linear-gradient(45deg, #F85B1A, #FFD700); border: none; color: #fff; border-radius: 50px; cursor: pointer; font-size: 18px; margin-bottom: 10px; }
+        .toggle-link { color: #072083; font-size: 12px; cursor: pointer; text-decoration: underline; margin-top: 10px; display: block; }
+        .success { color: #008000; font-weight: bold;}
+        .error { color: #d00; font-weight: bold;}
+        
+        /* Utility to hide sections */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN FORM -->
+    <div class="card" id="login-form">
+        <h1>SECURE LOGIN</h1>
+        <div style="width: 80px; height: 80px; background: #000; border-radius: 50%; margin: 0 auto 20px; border: 4px solid #F85B1A;"></div>
+        
+        <input type="text" id="login-user" placeholder="USERNAME" value="KAKAROT-01">
+        <input type="password" id="login-pass" placeholder="PASSWORD" value="pass123">
+        
+        <button onclick="doLogin()" id="login-btn">LOGIN</button>
+        
+        <p id="login-status"></p>
+        <span class="toggle-link" onclick="toggleMode()">NEW SAIYAN? REGISTER HERE</span>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div class="card hidden" id="register-form">
+        <h1>NEW ACCOUNT</h1>
+        <p style="color: #666; font-size: 12px;">Create ID & Link Device</p>
+        
+        <input type="text" id="reg-user" placeholder="CHOOSE USERNAME">
+        <input type="password" id="reg-pass" placeholder="CHOOSE PASSWORD">
+        
+        <button onclick="doRegister()" id="reg-btn">REGISTER</button>
+        
+        <p id="reg-status"></p>
+        <span class="toggle-link" onclick="toggleMode()">ALREADY REGISTERED? LOGIN</span>
+    </div>
+
+    <script>
+        // Toggle between Login and Register screens
+        function toggleMode() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+            // Clear status messages
+            document.getElementById('login-status').innerText = "";
+            document.getElementById('reg-status').innerText = "";
+        }
+
+        async function doRegister() {
+            const user = document.getElementById('reg-user').value;
+            const pass = document.getElementById('reg-pass').value;
+            const status = document.getElementById('reg-status');
+
+            if(!user || !pass) { status.innerText = "FILL ALL FIELDS"; status.className="error"; return; }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+                
+                if(res.ok) {
+                    status.innerText = "SUCCESS! SWITCHING TO LOGIN...";
+                    status.className = "success";
+                    setTimeout(toggleMode, 1500); // Switch screen after 1.5s
+                } else {
+                    status.innerText = data.error;
+                    status.className = "error";
+                }
+            } catch(e) { status.innerText = "SERVER ERROR"; status.className="error"; }
+        }
+
+        async function doLogin() {
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            const status = document.getElementById('login-status');
+            const btn = document.getElementById('login-btn');
+
+            if(!user || !pass) { status.innerText = "CREDENTIALS REQUIRED"; status.className="error"; return; }
+
+            btn.disabled = true;
+            status.innerText = "VERIFYING CREDENTIALS...";
+            status.className = "";
+
+            try {
+                // 1. Tell Server we want to login
+                const loginRes = await fetch('http://localhost:3000/api/login/initiate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                
+                const loginData = await loginRes.json();
+
+                if(!loginRes.ok) {
+                    status.innerText = "ERROR: " + loginData.error;
+                    status.className = "error";
+                    btn.disabled = false;
+                    return;
+                }
+
+                status.innerText = "WAITING FOR FACE ID...";
+                status.className = "success";
+
+                // 2. Start Polling (Checking every 1 second)
+                const interval = setInterval(async () => {
+                    try {
+                        const check = await fetch(`http://localhost:3000/api/auth/status/${user}`);
+                        const data = await check.json();
+
+                        if (data.status === 'APPROVED') {
+                            clearInterval(interval); // Stop checking
+                            status.innerText = "✔ APPROVED! REDIRECTING...";
+                            setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+                        } 
+                        else if (data.status === 'DENIED') {
+                            clearInterval(interval);
+                            status.innerText = "❌ DENIED BY DEVICE";
+                            status.className = "error";
+                            btn.disabled = false;
+                        }
+                    } catch(e) {
+                        // Ignore polling errors (server might be busy)
+                    }
+                }, 1000); // Check every 1000ms (1 second)
+
+            } catch(e) { 
+                status.innerText = "SERVER OFFLINE"; 
+                status.className="error"; 
+                btn.disabled = false; 
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capsule Corp | Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 1. Base Setup for 1920x1080 */
+        body { 
+            margin: 0; 
+            background-color: #1a1a2e; 
+            color: #fff; 
+            font-family: 'Roboto', sans-serif; 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden; 
+        }
+        
+        /* 2. Wider Sidebar for HD Screens */
+        .sidebar { 
+            width: 350px; 
+            background: #072083; 
+            padding: 40px; 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 6px solid #F85B1A; 
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        
+        .logo { 
+            font-family: 'Russo One'; 
+            font-size: 36px; 
+            color: #fff; 
+            margin-bottom: 60px; 
+            border-bottom: 4px solid #F85B1A; 
+            padding-bottom: 20px; 
+            letter-spacing: 2px;
+        }
+        
+        .nav-item { 
+            padding: 20px; 
+            cursor: pointer; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            transition: 0.3s; 
+            display: flex; 
+            align-items: center;
+        }
+        
+        .nav-item::before { content: '►'; margin-right: 15px; color: #F85B1A; opacity: 0; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: rgba(255, 255, 255, 0.1); color: #FFD700; padding-left: 30px; }
+        .nav-item:hover::before, .nav-item.active::before { opacity: 1; }
+        
+        /* 3. Main Content Area */
+        .main { 
+            flex-grow: 1; 
+            padding: 60px; 
+            overflow-y: auto; 
+            background-image: 
+                radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, #1a1a2e 0%, #0f0f1a 100%);
+            background-size: 40px 40px, 100% 100%; 
+            perspective: 1000px; /* Essential for 3D flip */
+        }
+        
+        h1 { 
+            font-family: 'Russo One'; 
+            font-size: 48px; 
+            border-left: 12px solid #F85B1A; 
+            padding-left: 30px; 
+            margin-bottom: 50px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(248, 91, 26, 0.5);
+        }
+        
+        /* 4. Grid Layout */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+            gap: 40px; 
+            max-width: 1600px;
+            padding-bottom: 50px;
+        }
+        
+        /* --- 5. FLIP CARD ANIMATION CSS --- */
+        .card-container {
+            background-color: transparent;
+            height: 450px; /* Fixed height matches inner card */
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: left;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        /* The Flip Action */
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Front and Back Face styling */
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            border: 2px solid #072083;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Front Face (The Image) */
+        .card-front {
+            background: rgba(10, 10, 30, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Back Face (The Description) */
+        .card-back {
+            background: linear-gradient(135deg, #072083, #0f0f1a);
+            color: white;
+            transform: rotateY(180deg);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-color: #F85B1A;
+        }
+
+        /* Card Content Styles */
+        .card-img { 
+            height: 250px; 
+            width: 100%;
+            background-color: #000; 
+            background-size: cover; 
+            background-position: top center; 
+            border-bottom: 2px solid #072083;
+        }
+        
+        .card-info { padding: 25px; flex-grow: 1; }
+        
+        .card-title { 
+            font-family: 'Russo One'; 
+            font-size: 28px; 
+            margin-bottom: 15px; 
+            color: #FFD700; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .stat { font-size: 16px; color: #aaa; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .stat strong { color: #fff; }
+
+        .bar-container { 
+            width: 100%; background: rgba(255,255,255,0.1); 
+            height: 12px; border-radius: 6px; margin-top: 20px; overflow: hidden;
+        }
+        .bar-fill { 
+            height: 100%; background: linear-gradient(90deg, #F85B1A, #FFD700); 
+            width: 0%; transition: width 1.5s ease-out; box-shadow: 0 0 10px #F85B1A;
+        }
+
+        /* Back Content Text */
+        .desc-header { font-family: 'Russo One'; color: #F85B1A; font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid #fff; padding-bottom: 10px; }
+        .desc-text { font-size: 16px; line-height: 1.6; color: #ddd; margin-bottom: 20px; }
+        .click-hint { margin-top: auto; font-size: 12px; color: #F85B1A; text-align: center; font-style: italic; }
+
+        /* 6. Tech Specs Table */
+        .tech-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 20px; }
+        .tech-table th, .tech-table td { border: 1px solid #072083; padding: 20px; text-align: left; }
+        .tech-table th { background: #072083; color: #fff; font-family: 'Russo One'; border-bottom: 4px solid #F85B1A; }
+        .tech-table tr:nth-child(even) { background: rgba(255,255,255,0.05); }
+
+        /* 7. Logout */
+        .logout { 
+            margin-top: auto; padding: 20px; 
+            background: linear-gradient(45deg, #d00, #900); 
+            text-align: center; border-radius: 12px; 
+            font-weight: bold; font-size: 18px; cursor: pointer; 
+            border: 2px solid rgba(255,255,255,0.2); transition: 0.3s;
+        }
+        .logout:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(221, 0, 0, 0.5); }
+
+        /* Content Switching Logic */
+        .content-section { display: none; }
+        .content-section.active { display: block; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">CAPSULE CORP</div>
+        <div class="nav-item active" onclick="showSection('z-fighters', this)">Z-Fighters</div>
+        <div class="nav-item" onclick="showSection('villains', this)">Villains Database</div>
+        <div class="nav-item" onclick="showSection('dragon-balls', this)">Dragon Balls</div>
+        <div class="nav-item" onclick="showSection('tech-specs', this)">Tech Specs</div>
+        <div class="logout" onclick="window.location.href='client.html'">LOGOUT SYSTEM</div>
+    </div>
+
+    <div class="main">
+        
+        <!-- SECTION 1: Z-FIGHTERS -->
+        <div id="z-fighters" class="content-section active">
+            <h1>SECURE ARCHIVE: Z-FIGHTERS</h1>
+            <div class="grid">
+                
+                <!-- GOKU -->
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-img" style="background-image: url('goku.jpg');"></div>
+                            <div class="card-info">
+                                <div class="card-title">SON GOKU</div>
+                                <div class="stat">Race: <strong>Saiyan</strong></div>
+                                <div class="stat">Form: <strong>Ultra Instinct</strong></div>
+                                <div class="stat" style="margin-top:10px;">Power Level: ∞</div>
+                                <div class="bar-container"><div class="bar-fill" style="width: 100%"></div></div>
+                                <div class="click-hint" style="text-align: center; margin-top: 15px;">Click for Bio</div>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="desc-header">SUBJECT DATA</div>
+                            <p class="desc-text">Born Kakarot. Earth's greatest defender. Master of martial arts who achieved the divine state of Ultra Instinct. Consistently breaks limits.</p>
+                            <div class="stat">Status: <strong>Alive</strong></div>
+                            <div class="stat">Affiliation: <strong>Z-Fighters</strong></div>
+                            <div class="click-hint">(Click to flip back)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VEGETA -->
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-img" style="background-image: url('vegeta.jpg');"></div>
+                            <div class="card-info">
+                                <div class="card-title">VEGETA</div>
+                                <div class="stat">Race: <strong>Saiyan</strong></div>
+                                <div class="stat">Form: <strong>Ultra Ego</strong></div>
+                                <div class="stat" style="margin-top:10px;">Power Level: 99.9%</div>
+                                <div class="bar-container"><div class="bar-fill" style="width: 95%"></div></div>
+                                <div class="click-hint" style="text-align: center; margin-top: 15px;">Click for Bio</div>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="desc-header">SUBJECT DATA</div>
+                            <p class="desc-text">Prince of all Saiyans. Harnesses the power of Destruction (Hakai) through Ultra Ego. Rival to Goku and protector of Earth.</p>
+                            <div class="stat">Status: <strong>Alive</strong></div>
+                            <div class="stat">Affiliation: <strong>Capsule Corp</strong></div>
+                            <div class="click-hint">(Click to flip back)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GOHAN -->
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-img" style="background-image: url('beastgohan.jpg');"></div>
+                            <div class="card-info">
+                                <div class="card-title">SON GOHAN</div>
+                                <div class="stat">Race: <strong>Half-Saiyan</strong></div>
+                                <div class="stat">Form: <strong>Beast Mode</strong></div>
+                                <div class="stat" style="margin-top:10px;">Power Level: Unknown</div>
+                                <div class="bar-container"><div class="bar-fill" style="width: 92%"></div></div>
+                                <div class="click-hint" style="text-align: center; margin-top: 15px;">Click for Bio</div>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="desc-header">SUBJECT DATA</div>
+                            <p class="desc-text">Goku's eldest son. Possesses limitless latent potential. Recently unlocked "Beast" form during the Cell Max incident.</p>
+                            <div class="stat">Status: <strong>Alive</strong></div>
+                            <div class="stat">Role: <strong>Scholar / Fighter</strong></div>
+                            <div class="click-hint">(Click to flip back)</div>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- PICCOLO -->
+                 <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-img" style="background-image: url('orangepiccolo.jpg');"></div>
+                            <div class="card-info">
+                                <div class="card-title">PICCOLO</div>
+                                <div class="stat">Race: <strong>Namekian</strong></div>
+                                <div class="stat">Form: <strong>Orange</strong></div>
+                                <div class="stat" style="margin-top:10px;">Power Level: High</div>
+                                <div class="bar-container"><div class="bar-fill" style="width: 88%"></div></div>
+                                <div class="click-hint" style="text-align: center; margin-top: 15px;">Click for Bio</div>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="desc-header">SUBJECT DATA</div>
+                            <p class="desc-text">Super Namekian strategist and mentor. Wished for potential unlock from Shenron, granting him the muscular "Orange" form.</p>
+                            <div class="stat">Status: <strong>Alive</strong></div>
+                            <div class="stat">Role: <strong>Mentor</strong></div>
+                            <div class="click-hint">(Click to flip back)</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: VILLAINS -->
+        <div id="villains" class="content-section">
+            <h1 style="border-color: #d00; color: #ffcccc;">THREAT ARCHIVE: VILLAINS</h1>
+            <div class="grid">
+                <!-- BLACK FRIEZA -->
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front" style="border-color: #d00;">
+                            <div class="card-img" style="background-image: url('blackfrieza.jpg'); border-bottom-color: #d00;"></div>
+                            <div class="card-info">
+                                <div class="card-title" style="color: #ff4444;">FRIEZA (BLACK)</div>
+                                <div class="stat">Status: <strong>Active Threat</strong></div>
+                                <div class="stat">Danger Level: <strong>Extreme</strong></div>
+                                <div class="bar-container" style="background: #300;"><div class="bar-fill" style="width: 100%; background: #d00;"></div></div>
+                            </div>
+                        </div>
+                        <div class="card-back" style="background: linear-gradient(135deg, #300, #000); border-color: #d00;">
+                            <div class="desc-header" style="color: #ff4444; border-color: #d00;">THREAT ANALYSIS</div>
+                            <p class="desc-text">Galactic Tyrant. Trained for 10 years in a hyperbolic time chamber to achieve "Black Frieza". One-shotted Goku and Vegeta.</p>
+                            <div class="stat">Bounty: <strong>∞ Zeni</strong></div>
+                            <div class="click-hint">(Click to flip back)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CELL MAX -->
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front" style="border-color: #d00;">
+                            <div class="card-img" style="background-image: url('cellmax.jpg'); border-bottom-color: #d00;"></div>
+                            <div class="card-info">
+                                <div class="card-title" style="color: #ff4444;">CELL MAX</div>
+                                <div class="stat">Status: <strong>Defeated</strong></div>
+                                <div class="stat">Danger Level: <strong>High</strong></div>
+                                <div class="bar-container" style="background: #300;"><div class="bar-fill" style="width: 80%; background: #d00;"></div></div>
+                            </div>
+                        </div>
+                        <div class="card-back" style="background: linear-gradient(135deg, #300, #000); border-color: #d00;">
+                            <div class="desc-header" style="color: #ff4444; border-color: #d00;">THREAT ANALYSIS</div>
+                            <p class="desc-text">Bio-Android created by Dr. Hedo. A giant, mindless beast based on the original Cell. Defeated by Gohan Beast.</p>
+                            <div class="stat">Weakness: <strong>Head Core</strong></div>
+                            <div class="click-hint">(Click to flip back)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: DRAGON BALLS -->
+        <div id="dragon-balls" class="content-section">
+            <h1 style="border-color: #FFD700; color: #ffeb3b;">ARTIFACTS</h1>
+            <div class="grid">
+                <div class="card-container">
+                    <div class="card-inner">
+                        <div class="card-front" style="border-color: #FFD700;">
+                            <div class="card-img" style="background-image: url('https://static.wikia.nocookie.net/dragonball/images/e/e6/Dragon_Balls_NV.png'); background-size: contain; border-bottom-color: #FFD700;"></div>
+                            <div class="card-info">
+                                <div class="card-title" style="color: #FFD700;">EARTH SET</div>
+                                <div class="stat">Dragon: <strong>Shenron</strong></div>
+                                <div class="stat">Wishes: <strong>3</strong></div>
+                            </div>
+                        </div>
+                        <div class="card-back" style="border-color: #FFD700;">
+                            <p>Data Unavailable.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: TECH SPECS -->
+        <div id="tech-specs" class="content-section">
+            <h1>SYSTEM SPECS: PROJECT OOB</h1>
+            <div class="card" style="padding: 0; background: rgba(0,0,0,0.3); height: auto;">
+                <table class="tech-table">
+                    <thead>
+                        <tr>
+                            <th style="background: #072083; padding: 20px; text-align: left; font-family: 'Russo One'; border-bottom: 4px solid #F85B1A;">COMPONENT</th>
+                            <th style="background: #072083; padding: 20px; text-align: left; font-family: 'Russo One'; border-bottom: 4px solid #F85B1A;">TECHNOLOGY</th>
+                            <th style="background: #072083; padding: 20px; text-align: left; font-family: 'Russo One'; border-bottom: 4px solid #F85B1A;">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 20px;">Web Client</td>
+                            <td style="padding: 20px;">HTML5 / CSS3 / JS</td>
+                            <td style="padding: 20px; color: #0f0; font-weight: bold;" id="web-status">ONLINE</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 20px;">Backend Server</td>
+                            <td style="padding: 20px;">Node.js / Express</td>
+                            <td style="padding: 20px; color: #0f0; font-weight: bold;" id="backend-status">CHECKING...</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 20px;">Mobile App</td>
+                            <td style="padding: 20px;">React Native / Expo</td>
+                            <td style="padding: 20px; color: #FFD700; font-weight: bold;" id="app-status">CHECKING...</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 20px;">Security</td>
+                            <td style="padding: 20px;">Face ID / Secure Enclave</td>
+                            <td style="padding: 20px; color: #0f0; font-weight: bold;">ACTIVE</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 20px;">Database</td>
+                            <td style="padding: 20px;">In-Memory / MongoDB</td>
+                            <td style="padding: 20px; color: #FFD700; font-weight: bold;">PROTOTYPE</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function showSection(sectionId, element) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(sec => sec.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update sidebar active state
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // --- STATUS CHECKER ---
+        async function checkSystemStatus() {
+            const backendStatusEl = document.getElementById('backend-status');
+            const appStatusEl = document.getElementById('app-status');
+
+            try {
+                // Check Backend (Ping the root or a safe endpoint)
+                // Assuming localhost:3000 is running locally
+                // Using a fetch with a short timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                
+                // We'll try to hit the register endpoint just to see if server is up
+                // Note: This expects the server to be running on localhost:3000
+                await fetch('http://localhost:3000/api/auth/status/test', { signal: controller.signal });
+                
+                // If fetch succeeds (even 404), server is reachable
+                backendStatusEl.innerText = "ONLINE";
+                backendStatusEl.style.color = "#0f0";
+                
+                // Simulate App Status based on Backend Status
+                // In a real scenario, the app would send a heartbeat to the server
+                appStatusEl.innerText = "ONLINE";
+                appStatusEl.style.color = "#0f0";
+
+            } catch (error) {
+                // If fetch fails (network error), server is down
+                backendStatusEl.innerText = "OFFLINE";
+                backendStatusEl.style.color = "#d00";
+                
+                appStatusEl.innerText = "DISCONNECTED";
+                appStatusEl.style.color = "#d00";
+            }
+        }
+
+        // Run check every 3 seconds
+        setInterval(checkSystemStatus, 3000);
+        // Run immediately on load
+        checkSystemStatus();
+
+    </script>
+
+</body>
+</html>
