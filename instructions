@@ -1,0 +1,54 @@
+Step 1: Install Dependencies
+
+Open a terminal in the project root folder.
+
+Navigate to the backend folder and install modules:
+
+cd backend
+npm install
+
+
+Navigate to the frontend folder and install modules:
+
+cd ../frontend
+npm install
+
+
+Step 2: Configure Network (Critical)
+
+Find your computer's local IP address (e.g., run ipconfig on Windows or ifconfig on Mac).
+
+Open frontend/App.js.
+
+Update the API_URL constant (around line 10) with your computer's IP address:
+
+const API_URL = 'http://YOUR_IP_ADDRESS_HERE:3000';
+
+
+Example: const API_URL = 'http://192.168.1.15:3000';
+
+Save the file.
+
+Step 3: Start the Backend
+
+Open a terminal in the backend folder.
+
+Run the server:
+
+node server.js
+
+
+Confirm you see: --- BACKEND SERVER RUNNING ON PORT 3000 ---
+
+Step 4: Start the Frontend (Mobile App)
+
+Open a new terminal in the frontend folder.
+
+Start the Expo server:
+
+npx expo start --clear
+
+
+Scan the QR code displayed in the terminal using your iPhone camera to load the app in Expo Go.
+
+After that if you go to the client.html and just click login, you can verify and it should take you to the dashboard page. I hope this helps.
